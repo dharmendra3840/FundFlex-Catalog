@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Product {
+  id          String    @id
+  slug        String    @unique
+  brand       String
+  name        String
+  description String
+  status      String    @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  variants    Variant[]
+
+  @@index([status])
+}
+
+model Variant {
+  id           String    @id
+  productId    String
+  sku          String    @unique
+  label        String
+  color        String?
+  finish       String?
+  storageGb    Int?
+  mrpMinor     Int       // Amount in paise
+  priceMinor   Int       // Amount in paise
+  currency     String    @default("INR")
+  stockStatus  String    @default("IN_STOCK") // IN_STOCK, OUT_OF_STOCK
+  isDefault    Boolean   @default(false)
+  
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  images       ProductImage[]
+  emiPlans     EmiPlan[]
+  selectionIntents SelectionIntent[]
+
+  @@index([productId])
+}
+
+model ProductImage {
+  id         String   @id
+  variantId  String
+  url        String
+  alt        String?
+  sortOrder  Int      @default(0)
+
+  variant    Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
+}
+
+model EmiPlan {
+  id                 String   @id
+  variantId          String
+  tenureMonths       Int
+  annualInterestBps  Int      // 10.5% = 1050
+  cashbackMinor      Int      @default(0)
+  method             String   @default("REDUCING_BALANCE") // PRECOMPUTED, REDUCING_BALANCE, ZERO_INTEREST
+  monthlyPaymentMinor Int?    // Nullable, computed if null
+  providerLabel      String?
+  backingLabel       String?
+  disclosureText     String?
+  status             String   @default("ACTIVE")
+  startsAt           DateTime @default(now())
+  endsAt             DateTime?
+
+  variant            Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  selectionIntents   SelectionIntent[]
+
+  @@index([variantId])
+}
+
+model SelectionIntent {
+  id          String   @id
+  variantId   String
+  planId      String
+  quotedPriceMinor Int
+  quotedMonthlyPaymentMinor Int
+  quotedTenureMonths Int
+  status      String   @default("READY_FOR_REVIEW")
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  variant     Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  plan        EmiPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+}

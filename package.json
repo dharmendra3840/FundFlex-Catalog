@@ -1,0 +1,20 @@
+{
+  "name": "fundflex",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w api\" \"npm run dev -w web\"",
+    "build": "npm run build --workspaces --if-present",
+    "db:push": "npm run db:push -w api",
+    "db:migrate": "npm run db:migrate -w api",
+    "db:seed": "npm run db:seed -w api",
+    "db:reset-demo": "npm run db:reset-demo -w api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}
